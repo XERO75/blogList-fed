@@ -1,9 +1,14 @@
-import axios from 'axios'
-const baseUrl = 'api/blogs'
+import axios from 'axios';
+const baseUrl = 'api/blogs';
 
 const getAll = () => {
-  const request = axios.get(baseUrl)
-  return request.then(response => response.data)
-}
+  const request = axios.get(baseUrl);
+  return request.then((response) => response.data);
+};
+
+const addBlog = (params) => {
+  const request = axios.post(baseUrl, params);
+  return request.then((response) => response.data);
+};
 // eslint-disable-next-line
-export default { getAll }
+export default { getAll, addBlog };
