@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import Blog from './components/Blog';
+import Notification from './components/Notification'
 import blogService from './services/blogs';
 import loginServer from './services/login';
 
 const App = () => {
   const [blogs, setBlogs] = useState([]);
+  const [errorMessage, setErrorMessage] = useState(null)
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [user, setUser] = useState(null);
@@ -89,20 +91,21 @@ const App = () => {
 
   const handleLogin = async (e) => {
     e.preventDefault();
-
     try {
       const user = await loginServer.login({
         username,
         password,
       });
-
       window.localStorage.setItem('loggedUser', JSON.stringify(user));
       loginServer.setToken(user.token);
       setUser(user);
       setUsername('');
       setPassword('');
     } catch (exception) {
-      console.log('exception', exception);
+      setErrorMessage('Wrong credenticals')
+      setTimeout(()=>{
+        setErrorMessage(null)
+      },5000)
     }
 
     // loginServer.login()
@@ -120,9 +123,21 @@ const App = () => {
       author,
       url,
     };
-    await blogService.addBlog(params);
-    const blogs = await blogService.getAll(params);
-    setBlogs(blogs);
+    try {
+      await blogService.addBlog(params);
+      const blogs = await blogService.getAll(params);
+      setBlogs(blogs);
+      setErrorMessage(`${params.title} by ${params.author} is added `)
+      setTimeout(()=>{
+        setErrorMessage(null)
+      },5000)
+    } catch (error) {
+      setErrorMessage(error)
+      setTimeout(()=>{
+        setErrorMessage(null)
+      },5000)
+    }
+    
   };
 
   useEffect(() => {
@@ -131,6 +146,7 @@ const App = () => {
 
   return (
     <div>
+      <Notification message={errorMessage} />
       {user === null && loginForm()}
       {user !== null && blogForm()}
       {user !== null && blogList()}
