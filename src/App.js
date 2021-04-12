@@ -1,18 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Blog from './components/Blog';
-import Notification from './components/Notification'
+import Notification from './components/Notification';
+import Togglable from './components/Togglable';
+import BlogForm from './components/BlogForm';
 import blogService from './services/blogs';
 import loginServer from './services/login';
 
 const App = () => {
   const [blogs, setBlogs] = useState([]);
-  const [errorMessage, setErrorMessage] = useState(null)
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+  const [errorMessage, setErrorMessage] = useState(null);
+  const [username, setUsername] = useState('lsl');
+  const [password, setPassword] = useState('123456');
   const [user, setUser] = useState(null);
-  const [title, setTitle] = useState('');
-  const [author, setAuthor] = useState('');
-  const [url, setUrl] = useState('');
+  const blogFormRef = useRef();
 
   const loginForm = () => (
     <div>
@@ -42,53 +42,6 @@ const App = () => {
     </div>
   );
 
-  const blogForm = () => (
-    <div>
-      <h1>create new</h1>
-      <form onSubmit={handleAdd}>
-        <div>
-          title:
-          <input
-            type="text"
-            value={title}
-            name="title"
-            onChange={({ target }) => setTitle(target.value)}
-          />
-        </div>
-        <div>
-          author:
-          <input
-            type="text"
-            value={author}
-            name="author"
-            onChange={({ target }) => setAuthor(target.value)}
-          />
-        </div>
-        <div>
-          url:
-          <input
-            type="text"
-            value={url}
-            name="url"
-            onChange={({ target }) => setUrl(target.value)}
-          />
-        </div>
-        <button type="submit">add</button>
-      </form>
-    </div>
-  );
-
-  const blogList = () => (
-    <div>
-      <h2>blogs</h2>
-      <span>{user.name} logged in</span>
-      <button onClick={handleLogout}>logout</button>
-      {blogs.map((blog) => (
-        <Blog key={blog.id} blog={blog} />
-      ))}
-    </div>
-  );
-
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
@@ -102,10 +55,10 @@ const App = () => {
       setUsername('');
       setPassword('');
     } catch (exception) {
-      setErrorMessage('Wrong credenticals')
-      setTimeout(()=>{
-        setErrorMessage(null)
-      },5000)
+      setErrorMessage('Wrong credenticals');
+      setTimeout(() => {
+        setErrorMessage(null);
+      }, 5000);
     }
 
     // loginServer.login()
@@ -116,29 +69,29 @@ const App = () => {
     setUser(null);
   };
 
-  const handleAdd = async (e) => {
-    e.preventDefault();
-    const params = {
-      title,
-      author,
-      url,
-    };
+  const addBlog = async (newBlog) => {
     try {
-      await blogService.addBlog(params);
-      const blogs = await blogService.getAll(params);
+      await blogService.addBlog(newBlog);
+      const blogs = await blogService.getAll(newBlog);
       setBlogs(blogs);
-      setErrorMessage(`${params.title} by ${params.author} is added `)
-      setTimeout(()=>{
-        setErrorMessage(null)
-      },5000)
+      setErrorMessage(`${newBlog.title} by ${newBlog.author} is added `);
+      blogFormRef.current.toggleVisibility();
+      setTimeout(() => {
+        setErrorMessage(null);
+      }, 5000);
     } catch (error) {
-      setErrorMessage(error)
-      setTimeout(()=>{
-        setErrorMessage(null)
-      },5000)
+      setErrorMessage(error);
+      setTimeout(() => {
+        setErrorMessage(null);
+      }, 5000);
     }
-    
   };
+
+  const blogForm = () => (
+    <Togglable buttonLabel="new note" ref={blogFormRef}>
+      <BlogForm createBlog={addBlog}></BlogForm>
+    </Togglable>
+  );
 
   useEffect(() => {
     blogService.getAll().then((blogs) => setBlogs(blogs));
@@ -147,9 +100,19 @@ const App = () => {
   return (
     <div>
       <Notification message={errorMessage} />
-      {user === null && loginForm()}
-      {user !== null && blogForm()}
-      {user !== null && blogList()}
+      <h2>blogs</h2>
+
+      {user === null ? (
+        loginForm()
+      ) : (
+        <div>
+          <span>{user.name} logged in</span>
+          <button onClick={handleLogout}>logout</button>
+          {blogForm()}
+          <Blog blogs={blogs} />
+          {/* {blogList()} */}
+        </div>
+      )}
     </div>
   );
 };
