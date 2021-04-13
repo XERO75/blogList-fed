@@ -97,6 +97,15 @@ const App = () => {
     blogService.getAll().then((blogs) => setBlogs(blogs));
   }, []);
 
+  useEffect(() => {
+    const loggedUserJSON = window.localStorage.getItem('loggedUser');
+    if (loggedUserJSON) {
+      const user = JSON.parse(loggedUserJSON);
+      setUser(user);
+      loginServer.setToken(user.token);
+    }
+  }, []);
+
   return (
     <div>
       <Notification message={errorMessage} />
